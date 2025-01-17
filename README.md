@@ -1,4 +1,4 @@
-# ozzo-validation
+# validation
 
 [![GoDoc](https://godoc.org/github.com/monetr/validation?status.png)](http://godoc.org/github.com/monetr/validation)
 [![Go Report](https://goreportcard.com/badge/github.com/monetr/validation)](https://goreportcard.com/report/github.com/monetr/validation)
