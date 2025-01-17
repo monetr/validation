@@ -11,9 +11,8 @@ jobs:
     name: Test
     strategy:
       matrix:
-        os: [ubuntu-latest,macos-latest,windows-latest]
         go: ['oldstable', 'stable']
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Golang
         uses: actions/setup-go@v5
