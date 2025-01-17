@@ -1,14 +1,14 @@
 # ozzo-validation
 
 [![GoDoc](https://godoc.org/github.com/monetr/validation?status.png)](http://godoc.org/github.com/monetr/validation)
-[![Build Status](https://travis-ci.org/go-ozzo/ozzo-validation.svg?branch=master)](https://travis-ci.org/go-ozzo/ozzo-validation)
-[![Coverage Status](https://coveralls.io/repos/github/go-ozzo/ozzo-validation/badge.svg?branch=master)](https://coveralls.io/github/go-ozzo/ozzo-validation?branch=master)
 [![Go Report](https://goreportcard.com/badge/github.com/monetr/validation)](https://goreportcard.com/report/github.com/monetr/validation)
 
 ## Description
 
-ozzo-validation is a Go package that provides configurable and extensible data validation capabilities.
-It has the following features:
+This package is a fork of the original https://github.com/go-ozzo/ozzo-validation
+
+validation is a Go package that provides configurable and extensible data validation capabilities. It has the following
+features:
 
 * use normal programming constructs rather than error-prone struct tags to specify how data should be validated.
 * can validate data of different types, e.g., structs, strings, byte slices, slices, maps, arrays.
@@ -19,19 +19,15 @@ It has the following features:
 * provide a rich set of validation rules right out of box.
 * extremely easy to create and use custom validation rules.
 
-For an example on how this library is used in an application, please refer to [go-rest-api](https://github.com/qiangxue/go-rest-api) which is a starter kit for building RESTful APIs in Go.
-
 ## Requirements
 
-Go 1.13 or above.
-
+Go 1.23 or above.
 
 ## Getting Started
 
 The ozzo-validation package mainly includes a set of validation rules and two validation methods. You use 
 validation rules to describe how a value should be considered valid, and you call either `validation.Validate()`
 or `validation.ValidateStruct()` to validate the value.
-
 
 ### Installation
 
