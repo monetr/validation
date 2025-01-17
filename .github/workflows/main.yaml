@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test
+    strategy:
+      matrix:
+        go: ['oldstable', 'stable']
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v5
+        with:
+          go-version: '${{ matrix.go }}'
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Test
+        run: |
+          test -z "`gofmt -l -d .`"
+          test -z "`go run golang.org/x/lint/golint@latest ./...`"
+          go test -v --race -covermode=atomic -coverprofile=coverage.out
