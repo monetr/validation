@@ -27,4 +27,4 @@ jobs:
         run: |
           test -z "`gofmt -l -d .`"
           test -z "`go run golang.org/x/lint/golint@latest ./...`"
-          go test -v --race -covermode=count -coverprofile=coverage.out
+          go test -v --race -covermode=atomic -coverprofile=coverage.out
