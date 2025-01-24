@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"unicode"
 
-	"github.com/asaskevich/govalidator"
+	"github.com/asaskevich/govalidator/v11"
 	"github.com/monetr/validation"
 )
 
