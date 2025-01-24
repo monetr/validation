@@ -131,7 +131,7 @@ func IsEmpty(value interface{}) bool {
 // the Value() method instead. A boolean value is also returned to indicate if
 // the value is nil or not (only applicable to interface, pointer, map, and slice).
 // If the value is neither an interface nor a pointer, it will be returned back.
-func Indirect(value interface{}) (interface{}, bool) {
+func Indirect(value any) (any, bool) {
 	rv := reflect.ValueOf(value)
 	kind := rv.Kind()
 	switch kind {
@@ -155,7 +155,7 @@ func Indirect(value interface{}) (interface{}, bool) {
 	return value, false
 }
 
-func indirectValuer(valuer driver.Valuer) (interface{}, bool) {
+func indirectValuer(valuer driver.Valuer) (any, bool) {
 	if value, err := valuer.Value(); value != nil && err == nil {
 		return Indirect(value)
 	}
