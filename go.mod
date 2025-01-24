@@ -3,7 +3,7 @@ module github.com/monetr/validation
 go 1.22
 
 require (
-	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496
+	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/stretchr/testify v1.4.0
 )
 
