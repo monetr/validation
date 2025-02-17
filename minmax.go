@@ -5,6 +5,7 @@
 package validation
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
@@ -80,6 +81,47 @@ func (r ThresholdRule) Validate(value any) error {
 	value, isNil := Indirect(value)
 	if isNil || IsEmpty(value) {
 		return nil
+	}
+
+	if jsonNumber, ok := value.(json.Number); ok {
+		switch r.threshold.(type) {
+		case int, int8, int16, int32, int64:
+			// If our comparing number is an integer, then parse the json number as an
+			// integer.
+			i, err := jsonNumber.Int64()
+			if err != nil {
+				return err
+			}
+			value = i
+		case uint, uint8, uint16, uint32, uint64:
+			// If our comparing number is an unsigned integer, then parse the json
+			// number as an integer and cast it.
+			i, err := jsonNumber.Int64()
+			if err != nil {
+				return err
+			}
+			value = uint64(i)
+		case float32, float64:
+			// If our comparing value is a float, then parse the json number as a
+			// float.
+			f, err := jsonNumber.Float64()
+			if err != nil {
+				return err
+			}
+			value = f
+		case time.Time:
+			// If the value we have is a json number but we are comparing it to a time
+			// object. Then assume it is a unix timestamp as a number.
+			i, err := jsonNumber.Int64()
+			if err != nil {
+				return err
+			}
+			value = time.Unix(i, 0)
+		}
+
+		if IsEmpty(value) {
+			return nil
+		}
 	}
 
 	rv := reflect.ValueOf(r.threshold)

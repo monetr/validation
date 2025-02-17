@@ -5,6 +5,7 @@
 package validation
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -19,9 +20,9 @@ func TestMin(t *testing.T) {
 
 	tests := []struct {
 		tag       string
-		threshold interface{}
+		threshold any
 		exclusive bool
-		value     interface{}
+		value     any
 		err       string
 	}{
 		// int cases
@@ -55,6 +56,21 @@ func TestMin(t *testing.T) {
 		{"t4.6", date20000601, true, 1, "cannot convert int to time.Time"},
 		{"t4.7", struct{}{}, false, 1, "type not supported: struct {}"},
 		{"t4.8", date0, false, date20000601, ""},
+		// Json number cases
+		{"t5.1", 1, false, json.Number("1"), ""},
+		{"t5.2", 1, false, json.Number("2"), ""},
+		{"t5.3", 1, false, json.Number("-1"), "must be no less than 1"},
+		// This is so fucking stupid, 0 is considered "empty?" so even though 0 is
+		// less than 1, this is considered okay?
+		{"t5.4", float64(1), false, json.Number("0"), ""},
+		{"t5.5", float64(1), true, json.Number("1"), "must be greater than 1"},
+		{"t5.6", float64(1), false, json.Number("1"), ""},
+		{"t5.7", float64(1), false, json.Number("2"), ""},
+		{"t5.8", float64(1), false, json.Number("-1"), "must be no less than 1"},
+		// This is so fucking stupid, 0 is considered "empty?" so even though 0 is
+		// less than 1, this is considered okay?
+		{"t5.9", float64(1), false, json.Number("0"), ""},
+		{"t5.10", float64(1), true, json.Number("1"), "must be greater than 1"},
 	}
 
 	for _, test := range tests {
@@ -117,6 +133,13 @@ func TestMax(t *testing.T) {
 		{"t4.4", date20000601, false, date0, ""},
 		{"t4.5", date20000601, true, date20000601, "must be less than 2000-06-01 00:00:00 +0000 UTC"},
 		{"t4.6", date20000601, true, 1, "cannot convert int to time.Time"},
+		{"t5.1", 2, false, json.Number("2"), ""},
+		{"t5.2", 2, false, json.Number("1"), ""},
+		{"t5.3", 2, false, json.Number("3"), "must be no greater than 2"},
+		// This is so fucking stupid, 0 is considered "empty?" so even though 0 is
+		// less than 1, this is considered okay?
+		{"t5.4", 2, false, json.Number("0"), ""},
+		{"t5.5", 2, true, json.Number("2"), "must be less than 2"},
 	}
 
 	for _, test := range tests {
