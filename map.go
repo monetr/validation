@@ -133,9 +133,19 @@ func Key(key interface{}, rules ...Rule) *KeyRules {
 	}
 }
 
+// Deprecated: Use Required instead.
+//
 // Optional configures the rule to ignore the key if missing.
 func (r *KeyRules) Optional() *KeyRules {
 	r.optional = true
+	return r
+}
+
+// Required sets whether or not this key is required. If it is optional then you
+// can pass false to this function. Not calling this function will default to
+// the key being required.
+func (r *KeyRules) Required(required bool) *KeyRules {
+	r.optional = !required
 	return r
 }
 
