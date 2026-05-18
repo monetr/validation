@@ -13,7 +13,8 @@
         { "type": "refactor", "section": "Refactor", "hidden": false },
         { "type": "doc", "section": "Documentation", "hidden": false },
         { "type": "docs", "section": "Documentation", "hidden": false },
-        { "type": "ci", "section": "Build Automation", "hidden": false }
+        { "type": "ci", "section": "Build Automation", "hidden": false },
+        { "type": "build", "section": "Build Automation", "hidden": false }
       ]
     }
   }
