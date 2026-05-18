@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/url"
 	"reflect"
@@ -1309,7 +1310,7 @@ func ByteLength(str string, params ...string) bool {
 	if len(params) == 2 {
 		min, _ := ToInt(params[0])
 		max, _ := ToInt(params[1])
-		return len(str) >= int(min) && len(str) <= int(max)
+		return int64(len(str)) >= min && int64(len(str)) <= max
 	}
 
 	return false
@@ -1326,6 +1327,9 @@ func RuneLength(str string, params ...string) bool {
 func IsRsaPub(str string, params ...string) bool {
 	if len(params) == 1 {
 		len, _ := ToInt(params[0])
+		if len < 0 || len > math.MaxInt {
+			return false
+		}
 		return IsRsaPublicKey(str, int(len))
 	}
 
@@ -1348,7 +1352,7 @@ func StringLength(str string, params ...string) bool {
 		strLength := utf8.RuneCountInString(str)
 		min, _ := ToInt(params[0])
 		max, _ := ToInt(params[1])
-		return strLength >= int(min) && strLength <= int(max)
+		return int64(strLength) >= min && int64(strLength) <= max
 	}
 
 	return false
@@ -1360,7 +1364,7 @@ func MinStringLength(str string, params ...string) bool {
 	if len(params) == 1 {
 		strLength := utf8.RuneCountInString(str)
 		min, _ := ToInt(params[0])
-		return strLength >= int(min)
+		return int64(strLength) >= min
 	}
 
 	return false
@@ -1372,7 +1376,7 @@ func MaxStringLength(str string, params ...string) bool {
 	if len(params) == 1 {
 		strLength := utf8.RuneCountInString(str)
 		max, _ := ToInt(params[0])
-		return strLength <= int(max)
+		return int64(strLength) <= max
 	}
 
 	return false
