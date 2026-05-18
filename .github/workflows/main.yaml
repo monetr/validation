@@ -20,7 +20,7 @@ jobs:
           go-version: '${{ matrix.go }}'
 
       - name: Checkout code
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
 
       - name: Test
         run: |
