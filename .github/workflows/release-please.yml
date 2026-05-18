@@ -1,0 +1,21 @@
+name: Release
+on:
+  push:
+    branches: [main]
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # Maintains a "release" PR with an updated CHANGELOG.md based on
+      # Conventional Commits. Merging that PR creates the GitHub Release and
+      # the `vX.Y.Z` git tag. For a Go module that tag *is* the published
+      # artifact (consumed directly by `go get`), so there is no separate
+      # publish step like the npm packages in monetr/notify and monetr/vaul.
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
