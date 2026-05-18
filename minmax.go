@@ -23,8 +23,8 @@ var (
 )
 
 // ThresholdRule is a validation rule that checks if a value satisfies the specified threshold requirement.
-type ThresholdRule struct {
-	threshold any
+type ThresholdRule[T Threshold] struct {
+	threshold T
 	operator  int
 	err       Error
 }
@@ -41,8 +41,8 @@ const (
 // Note that the value being checked and the threshold value must be of the same type.
 // Only int, uint, float and time.Time types are supported.
 // An empty value is considered valid. Please use the Required rule to make sure a value is not empty.
-func Min(min any) ThresholdRule {
-	return ThresholdRule{
+func Min[T Threshold](min T) ThresholdRule[T] {
+	return ThresholdRule[T]{
 		threshold: min,
 		operator:  greaterEqualThan,
 		err:       ErrMinGreaterEqualThanRequired,
@@ -55,8 +55,8 @@ func Min(min any) ThresholdRule {
 // Note that the value being checked and the threshold value must be of the same type.
 // Only int, uint, float and time.Time types are supported.
 // An empty value is considered valid. Please use the Required rule to make sure a value is not empty.
-func Max(max any) ThresholdRule {
-	return ThresholdRule{
+func Max[T Threshold](max T) ThresholdRule[T] {
+	return ThresholdRule[T]{
 		threshold: max,
 		operator:  lessEqualThan,
 		err:       ErrMaxLessEqualThanRequired,
@@ -64,7 +64,7 @@ func Max(max any) ThresholdRule {
 }
 
 // Exclusive sets the comparison to exclude the boundary value.
-func (r ThresholdRule) Exclusive() ThresholdRule {
+func (r ThresholdRule[T]) Exclusive() ThresholdRule[T] {
 	switch r.operator {
 	case greaterEqualThan:
 		r.operator = greaterThan
@@ -77,14 +77,14 @@ func (r ThresholdRule) Exclusive() ThresholdRule {
 }
 
 // Validate checks if the given value is valid or not.
-func (r ThresholdRule) Validate(value any) error {
+func (r ThresholdRule[T]) Validate(value any) error {
 	value, isNil := Indirect(value)
 	if isNil || IsEmpty(value) {
 		return nil
 	}
 
 	if jsonNumber, ok := value.(json.Number); ok {
-		switch r.threshold.(type) {
+		switch any(r.threshold).(type) {
 		case int, int8, int16, int32, int64:
 			// If our comparing number is an integer, then parse the json number as an
 			// integer.
@@ -154,7 +154,7 @@ func (r ThresholdRule) Validate(value any) error {
 		}
 
 	case reflect.Struct:
-		t, ok := r.threshold.(time.Time)
+		t, ok := any(r.threshold).(time.Time)
 		if !ok {
 			return fmt.Errorf("type not supported: %v", rv.Type())
 		}
@@ -174,18 +174,18 @@ func (r ThresholdRule) Validate(value any) error {
 }
 
 // Error sets the error message for the rule.
-func (r ThresholdRule) Error(message string) ThresholdRule {
+func (r ThresholdRule[T]) Error(message string) ThresholdRule[T] {
 	r.err = r.err.SetMessage(message)
 	return r
 }
 
 // ErrorObject sets the error struct for the rule.
-func (r ThresholdRule) ErrorObject(err Error) ThresholdRule {
+func (r ThresholdRule[T]) ErrorObject(err Error) ThresholdRule[T] {
 	r.err = err
 	return r
 }
 
-func (r ThresholdRule) compareInt(threshold, value int64) bool {
+func (r ThresholdRule[T]) compareInt(threshold, value int64) bool {
 	switch r.operator {
 	case greaterThan:
 		return value > threshold
@@ -198,7 +198,7 @@ func (r ThresholdRule) compareInt(threshold, value int64) bool {
 	}
 }
 
-func (r ThresholdRule) compareUint(threshold, value uint64) bool {
+func (r ThresholdRule[T]) compareUint(threshold, value uint64) bool {
 	switch r.operator {
 	case greaterThan:
 		return value > threshold
@@ -211,7 +211,7 @@ func (r ThresholdRule) compareUint(threshold, value uint64) bool {
 	}
 }
 
-func (r ThresholdRule) compareFloat(threshold, value float64) bool {
+func (r ThresholdRule[T]) compareFloat(threshold, value float64) bool {
 	switch r.operator {
 	case greaterThan:
 		return value > threshold
@@ -224,7 +224,7 @@ func (r ThresholdRule) compareFloat(threshold, value float64) bool {
 	}
 }
 
-func (r ThresholdRule) compareTime(threshold, value time.Time) bool {
+func (r ThresholdRule[T]) compareTime(threshold, value time.Time) bool {
 	switch r.operator {
 	case greaterThan:
 		return value.After(threshold)

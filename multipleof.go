@@ -10,33 +10,33 @@ var ErrMultipleOfInvalid = NewError("validation_multiple_of_invalid", "must be m
 
 // MultipleOf returns a validation rule that checks if a value is a multiple of the "base" value.
 // Note that "base" should be of integer type.
-func MultipleOf(base any) MultipleOfRule {
-	return MultipleOfRule{
+func MultipleOf[T Integer](base T) MultipleOfRule[T] {
+	return MultipleOfRule[T]{
 		base: base,
 		err:  ErrMultipleOfInvalid,
 	}
 }
 
 // MultipleOfRule is a validation rule that checks if a value is a multiple of the "base" value.
-type MultipleOfRule struct {
-	base any
+type MultipleOfRule[T Integer] struct {
+	base T
 	err  Error
 }
 
 // Error sets the error message for the rule.
-func (r MultipleOfRule) Error(message string) MultipleOfRule {
+func (r MultipleOfRule[T]) Error(message string) MultipleOfRule[T] {
 	r.err = r.err.SetMessage(message)
 	return r
 }
 
 // ErrorObject sets the error struct for the rule.
-func (r MultipleOfRule) ErrorObject(err Error) MultipleOfRule {
+func (r MultipleOfRule[T]) ErrorObject(err Error) MultipleOfRule[T] {
 	r.err = err
 	return r
 }
 
 // Validate checks if the value is a multiple of the "base" value.
-func (r MultipleOfRule) Validate(value any) error {
+func (r MultipleOfRule[T]) Validate(value any) error {
 	rv := reflect.ValueOf(r.base)
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:

@@ -23,14 +23,14 @@ var (
 
 type (
 	// MapRule represents a rule set associated with a map.
-	MapRule struct {
-		keys           []*KeyRules
+	MapRule[K comparable] struct {
+		keys           []*KeyRules[K]
 		allowExtraKeys bool
 	}
 
 	// KeyRules represents a rule set associated with a map key.
-	KeyRules struct {
-		key      interface{}
+	KeyRules[K comparable] struct {
+		key      K
 		optional bool
 		rules    []Rule
 	}
@@ -48,23 +48,23 @@ type (
 //	)
 //
 // A nil value is considered valid. Use the Required rule to make sure a map value is present.
-func Map(keys ...*KeyRules) MapRule {
-	return MapRule{keys: keys}
+func Map[K comparable](keys ...*KeyRules[K]) MapRule[K] {
+	return MapRule[K]{keys: keys}
 }
 
 // AllowExtraKeys configures the rule to ignore extra keys.
-func (r MapRule) AllowExtraKeys() MapRule {
+func (r MapRule[K]) AllowExtraKeys() MapRule[K] {
 	r.allowExtraKeys = true
 	return r
 }
 
 // Validate checks if the given value is valid or not.
-func (r MapRule) Validate(m interface{}) error {
+func (r MapRule[K]) Validate(m any) error {
 	return r.ValidateWithContext(nil, m)
 }
 
 // ValidateWithContext checks if the given value is valid or not.
-func (r MapRule) ValidateWithContext(ctx context.Context, m interface{}) error {
+func (r MapRule[K]) ValidateWithContext(ctx context.Context, m any) error {
 	value := reflect.ValueOf(m)
 	if value.Kind() == reflect.Ptr {
 		value = value.Elem()
@@ -81,9 +81,9 @@ func (r MapRule) ValidateWithContext(ctx context.Context, m interface{}) error {
 	errs := Errors{}
 	kt := value.Type().Key()
 
-	var extraKeys map[interface{}]bool
+	var extraKeys map[any]bool
 	if !r.allowExtraKeys {
-		extraKeys = make(map[interface{}]bool, value.Len())
+		extraKeys = make(map[any]bool, value.Len())
 		for _, k := range value.MapKeys() {
 			extraKeys[k.Interface()] = true
 		}
@@ -126,8 +126,8 @@ func (r MapRule) ValidateWithContext(ctx context.Context, m interface{}) error {
 }
 
 // Key specifies a map key and the corresponding validation rules.
-func Key(key interface{}, rules ...Rule) *KeyRules {
-	return &KeyRules{
+func Key[K comparable](key K, rules ...Rule) *KeyRules[K] {
+	return &KeyRules[K]{
 		key:   key,
 		rules: rules,
 	}
@@ -136,7 +136,7 @@ func Key(key interface{}, rules ...Rule) *KeyRules {
 // Deprecated: Use Required instead.
 //
 // Optional configures the rule to ignore the key if missing.
-func (r *KeyRules) Optional() *KeyRules {
+func (r *KeyRules[K]) Optional() *KeyRules[K] {
 	r.optional = true
 	return r
 }
@@ -144,12 +144,12 @@ func (r *KeyRules) Optional() *KeyRules {
 // Required sets whether or not this key is required. If it is optional then you
 // can pass false to this function. Not calling this function will default to
 // the key being required.
-func (r *KeyRules) Required(required bool) *KeyRules {
+func (r *KeyRules[K]) Required(required bool) *KeyRules[K] {
 	r.optional = !required
 	return r
 }
 
 // getErrorKeyName returns the name that should be used to represent the validation error of a map key.
-func getErrorKeyName(key interface{}) string {
+func getErrorKeyName(key any) string {
 	return fmt.Sprintf("%v", key)
 }

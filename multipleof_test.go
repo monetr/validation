@@ -16,8 +16,9 @@ func TestMultipleOf(t *testing.T) {
 	assert.Equal(t, nil, r.Validate(20))
 	assert.Equal(t, "cannot convert float32 to int64", r.Validate(float32(20)).Error())
 
-	r2 := MultipleOf("some string ....")
-	assert.Equal(t, "type not supported: string", r2.Validate(10).Error())
+	// Note: MultipleOf now requires an integer base at compile time
+	// (MultipleOf[T Integer]), so a non-integer base such as a string is no
+	// longer expressible and the previous "type not supported" case is gone.
 
 	r3 := MultipleOf(uint(10))
 	assert.Equal(t, "must be multiple of 10", r3.Validate(uint(11)).Error())

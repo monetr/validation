@@ -93,7 +93,8 @@ func TestValidateStruct(t *testing.T) {
 		{"t3.3", m0, []*FieldRules{}, ""},
 		{"t3.4", &m0, []*FieldRules{}, ErrStructPointer.Error()},
 		// invalid field spec
-		{"t4.1", &m1, []*FieldRules{Field(m1)}, ErrFieldPointer(0).Error()},
+		// Note: Field now requires a pointer at compile time (Field[T any](*T)),
+		// so the previous "Field(m1)" ErrFieldPointer case is no longer expressible.
 		{"t4.2", &m1, []*FieldRules{Field(&m1)}, ErrFieldNotFound(0).Error()},
 		// struct tag
 		{"t5.1", &m1, []*FieldRules{Field(&m1.G, &validateAbc{})}, "g: error abc."},

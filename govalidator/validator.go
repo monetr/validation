@@ -1084,7 +1084,7 @@ func ValidateMap(s map[string]interface{}, m map[string]interface{}) (bool, erro
 				if _, ok := s[key]; !ok {
 					requiredResult = false
 					if required.customErrorMessage != "" {
-						err = Error{key, fmt.Errorf(required.customErrorMessage), true, "required", []string{}}
+						err = Error{key, fmt.Errorf("%s", required.customErrorMessage), true, "required", []string{}}
 					} else {
 						err = Error{key, fmt.Errorf("required field missing"), false, "required", []string{}}
 					}
@@ -1424,7 +1424,7 @@ func checkRequired(v reflect.Value, t reflect.StructField, options tagOptionsMap
 
 	if requiredOption, isRequired := options["required"]; isRequired {
 		if len(requiredOption.customErrorMessage) > 0 {
-			return false, Error{t.Name, fmt.Errorf(requiredOption.customErrorMessage), true, "required", []string{}}
+			return false, Error{t.Name, fmt.Errorf("%s", requiredOption.customErrorMessage), true, "required", []string{}}
 		}
 		return false, Error{t.Name, fmt.Errorf("non zero value required"), false, "required", []string{}}
 	} else if _, isOptional := options["optional"]; fieldsRequiredByDefault && !isOptional {

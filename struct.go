@@ -121,7 +121,7 @@ func ValidateStructWithContext(ctx context.Context, structPtr any, fields ...*Fi
 
 // Field specifies a struct field and the corresponding validation rules.
 // The struct field must be specified as a pointer to it.
-func Field(fieldPtr any, rules ...Rule) *FieldRules {
+func Field[T any](fieldPtr *T, rules ...Rule) *FieldRules {
 	return &FieldRules{
 		fieldPtr: fieldPtr,
 		rules:    rules,
