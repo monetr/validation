@@ -729,6 +729,7 @@ Below is the whole list of the rules provided by the `is` package:
 * `JSON`: validates if a string is in valid JSON format
 * `ASCII`: validates if a string contains ASCII characters only
 * `PrintableASCII`: validates if a string contains printable ASCII characters only
+* `PrintableUnicode`: validates if a string contains printable characters only (via `unicode.IsPrint`), allowing international text and emoji while rejecting tabs, newlines, and invisible characters
 * `Multibyte`: validates if a string contains multibyte characters
 * `FullWidth`: validates if a string contains full-width characters
 * `HalfWidth`: validates if a string contains half-width characters

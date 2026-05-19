@@ -72,6 +72,8 @@ var (
 	ErrASCII = validation.NewError("validation_is_ascii", "must contain ASCII characters only")
 	// ErrPrintableASCII is the error that returns in case of an invalid printable ASCII value.
 	ErrPrintableASCII = validation.NewError("validation_is_printable_ascii", "must contain printable ASCII characters only")
+	// ErrPrintableUnicode is the error that returns in case of a value containing non-printable characters.
+	ErrPrintableUnicode = validation.NewError("validation_is_printable_unicode", "must contain printable characters only")
 	// ErrMultibyte is the error that returns in case of an invalid multibyte value.
 	ErrMultibyte = validation.NewError("validation_is_multibyte", "must contain multibyte characters")
 	// ErrFullWidth is the error that returns in case of an invalid full-width value.
@@ -185,6 +187,14 @@ var (
 	ASCII = validation.NewStringRuleWithError(govalidator.IsASCII, ErrASCII)
 	// PrintableASCII validates if a string contains printable ASCII characters only
 	PrintableASCII = validation.NewStringRuleWithError(govalidator.IsPrintableASCII, ErrPrintableASCII)
+	// PrintableUnicode validates if a string contains printable characters only, as
+	// determined by unicode.IsPrint. Unlike PrintableASCII it accepts any printable
+	// Unicode (letters, marks, numbers, punctuation, symbols, and the ASCII space),
+	// so international text such as "Café" or "Pösted" and emoji pass, while tabs,
+	// newlines, and invisible characters (zero-width joiners, non-breaking spaces,
+	// etc.) are rejected. Note that invalid UTF-8 is decoded as U+FFFD, which is
+	// itself printable, so this rule does not independently detect malformed UTF-8.
+	PrintableUnicode = validation.NewStringRuleWithError(isPrintableUnicode, ErrPrintableUnicode)
 	// Multibyte validates if a string contains multibyte characters
 	Multibyte = validation.NewStringRuleWithError(govalidator.IsMultibyte, ErrMultibyte)
 	// FullWidth validates if a string contains full-width characters
@@ -277,6 +287,15 @@ func isDomain(value string) bool {
 func isUTFNumeric(value string) bool {
 	for _, c := range value {
 		if !unicode.IsNumber(c) {
+			return false
+		}
+	}
+	return true
+}
+
+func isPrintableUnicode(value string) bool {
+	for _, c := range value {
+		if !unicode.IsPrint(c) {
 			return false
 		}
 	}
