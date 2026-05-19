@@ -78,7 +78,10 @@ func (r ThresholdRule[T]) Exclusive() ThresholdRule[T] {
 
 // Validate checks if the given value is valid or not.
 func (r ThresholdRule[T]) Validate(value any) error {
-	value, isNil := Indirect(value)
+	value, isNil, err := Indirect(value)
+	if err != nil {
+		return err
+	}
 	if isNil || IsEmpty(value) {
 		return nil
 	}

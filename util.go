@@ -131,20 +131,25 @@ func IsEmpty(value interface{}) bool {
 // the Value() method instead. A boolean value is also returned to indicate if
 // the value is nil or not (only applicable to interface, pointer, map, and slice).
 // If the value is neither an interface nor a pointer, it will be returned back.
-func Indirect(value any) (any, bool) {
+//
+// If the value implements driver.Valuer and its Value() method returns an error,
+// that error is returned as an InternalError. A failing Valuer is a malfunction
+// of the data type, not an indication that the value is absent, so it must not
+// be silently treated as a nil (valid) value.
+func Indirect(value any) (any, bool, error) {
 	rv := reflect.ValueOf(value)
 	kind := rv.Kind()
 	switch kind {
 	case reflect.Invalid:
-		return nil, true
+		return nil, true, nil
 	case reflect.Ptr, reflect.Interface:
 		if rv.IsNil() {
-			return nil, true
+			return nil, true, nil
 		}
 		return Indirect(rv.Elem().Interface())
 	case reflect.Slice, reflect.Map, reflect.Func, reflect.Chan:
 		if rv.IsNil() {
-			return nil, true
+			return nil, true, nil
 		}
 	}
 
@@ -152,12 +157,16 @@ func Indirect(value any) (any, bool) {
 		return indirectValuer(value.(driver.Valuer))
 	}
 
-	return value, false
+	return value, false, nil
 }
 
-func indirectValuer(valuer driver.Valuer) (any, bool) {
-	if value, err := valuer.Value(); value != nil && err == nil {
-		return Indirect(value)
+func indirectValuer(valuer driver.Valuer) (any, bool, error) {
+	value, err := valuer.Value()
+	if err != nil {
+		return nil, false, NewInternalError(err)
 	}
-	return nil, true
+	if value == nil {
+		return nil, true, nil
+	}
+	return Indirect(value)
 }

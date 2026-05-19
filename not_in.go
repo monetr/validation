@@ -29,7 +29,10 @@ type NotInRule[T any] struct {
 
 // Validate checks if the given value is valid or not.
 func (r NotInRule[T]) Validate(value any) error {
-	value, isNil := Indirect(value)
+	value, isNil, err := Indirect(value)
+	if err != nil {
+		return err
+	}
 	if isNil || IsEmpty(value) {
 		return nil
 	}

@@ -34,7 +34,10 @@ type RequiredRule struct {
 // Validate checks if the given value is valid or not.
 func (r RequiredRule) Validate(value any) error {
 	if r.condition {
-		value, isNil := Indirect(value)
+		value, isNil, err := Indirect(value)
+		if err != nil {
+			return err
+		}
 		if r.skipNil && !isNil && IsEmpty(value) || !r.skipNil && (isNil || IsEmpty(value)) {
 			if r.err != nil {
 				return r.err

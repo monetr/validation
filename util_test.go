@@ -6,6 +6,8 @@ package validation
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"errors"
 	"testing"
 	"time"
 
@@ -293,8 +295,44 @@ func TestIndirect(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, isNil := Indirect(test.value)
+		result, isNil, err := Indirect(test.value)
+		assert.NoError(t, err, test.tag)
 		assert.Equal(t, test.result, result, test.tag)
 		assert.Equal(t, test.isNil, isNil, test.tag)
 	}
+}
+
+type erroringValuer struct{}
+
+func (erroringValuer) Value() (driver.Value, error) {
+	return nil, errors.New("valuer boom")
+}
+
+func TestIndirect_ValuerError(t *testing.T) {
+	// A driver.Valuer whose Value() returns an error is a malfunction of the
+	// data type, not an absent value. Indirect must surface it as an
+	// InternalError rather than silently reporting nil/valid.
+	result, isNil, err := Indirect(erroringValuer{})
+	assert.Nil(t, result)
+	assert.False(t, isNil)
+	if assert.Error(t, err) {
+		ie, ok := err.(InternalError)
+		assert.True(t, ok, "expected an InternalError")
+		assert.EqualError(t, ie.InternalError(), "valuer boom")
+	}
+}
+
+func TestRule_ValuerError_NotBypassed(t *testing.T) {
+	// Regression for the validation-bypass: a required field whose Valuer
+	// errors must not pass validation.
+	err := Validate(erroringValuer{}, Required)
+	if assert.Error(t, err) {
+		_, ok := err.(InternalError)
+		assert.True(t, ok, "expected an InternalError, got %T", err)
+	}
+
+	// The same must hold inside ValidateStruct.
+	s := struct{ V erroringValuer }{}
+	serr := ValidateStruct(&s, Field(&s.V, Required))
+	assert.Error(t, serr)
 }

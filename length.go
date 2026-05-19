@@ -51,15 +51,15 @@ type LengthRule struct {
 
 // Validate checks if the given value is valid or not.
 func (r LengthRule) Validate(value any) error {
-	value, isNil := Indirect(value)
+	value, isNil, err := Indirect(value)
+	if err != nil {
+		return err
+	}
 	if isNil || IsEmpty(value) {
 		return nil
 	}
 
-	var (
-		l   int
-		err error
-	)
+	var l int
 	if s, ok := value.(string); ok && r.rune {
 		l = utf8.RuneCountInString(s)
 	} else if l, err = LengthOfValue(value); err != nil {

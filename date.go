@@ -80,7 +80,10 @@ func (r DateRule) Max(max time.Time) DateRule {
 
 // Validate checks if the given value is a valid date.
 func (r DateRule) Validate(value any) error {
-	value, isNil := Indirect(value)
+	value, isNil, err := Indirect(value)
+	if err != nil {
+		return err
+	}
 	if isNil || IsEmpty(value) {
 		return nil
 	}

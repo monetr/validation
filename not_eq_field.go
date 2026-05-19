@@ -38,12 +38,18 @@ type NotEqFieldRule[T any] struct {
 
 // Validate checks if the given value is valid or not.
 func (r NotEqFieldRule[T]) Validate(value any) error {
-	value, isNil := Indirect(value)
+	value, isNil, err := Indirect(value)
+	if err != nil {
+		return err
+	}
 	if isNil || IsEmpty(value) {
 		return nil
 	}
 
-	other, _ := Indirect(*r.other)
+	other, _, err := Indirect(*r.other)
+	if err != nil {
+		return err
+	}
 	if reflect.DeepEqual(other, value) {
 		return r.err
 	}

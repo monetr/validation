@@ -18,7 +18,10 @@ type notNilRule struct {
 
 // Validate checks if the given value is valid or not.
 func (r notNilRule) Validate(value any) error {
-	_, isNil := Indirect(value)
+	_, isNil, err := Indirect(value)
+	if err != nil {
+		return err
+	}
 	if isNil {
 		if r.err != nil {
 			return r.err
