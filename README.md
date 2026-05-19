@@ -21,13 +21,14 @@ features:
 
 ## Requirements
 
-Go 1.23 or above.
+Go 1.24 or above.
 
 ## Getting Started
 
-The ozzo-validation package mainly includes a set of validation rules and two validation methods. You use 
-validation rules to describe how a value should be considered valid, and you call either `validation.Validate()`
-or `validation.ValidateStruct()` to validate the value.
+This package mainly includes a set of validation rules and several validation methods. You use
+validation rules to describe how a value should be considered valid, and you call `validation.Validate()`,
+`validation.ValidateStruct()`, or `validation.Map()` to validate the value. Many of the rules are generic,
+so the value you compare against is type-checked at compile time.
 
 ### Installation
 
@@ -468,6 +469,32 @@ result := validation.ValidateStruct(&a,
 )
 ```
 
+### Comparing Two Fields
+
+`Eq` and `NotEq` compare a value against a constant. To compare one struct field against another
+(for example a password and its confirmation), use `EqField`/`NotEqField` and pass a pointer to the
+sibling field, just like you pass field pointers to `Field`:
+
+```go
+type Registration struct {
+	Password        string
+	ConfirmPassword string
+}
+
+func (r Registration) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Password, validation.Required, validation.Length(8, 100)),
+		validation.Field(&r.ConfirmPassword, validation.EqField(&r.Password)),
+	)
+}
+
+r := Registration{Password: "hunter2!!", ConfirmPassword: "typo"}
+fmt.Println(r.Validate())
+// Output:
+// ConfirmPassword: must be equal to the other value.
+```
+
+
 ### Customizing Error Messages
 
 All built-in validation rules allow you to customize their error messages. To do so, simply call the `Error()` method
@@ -507,7 +534,7 @@ method as shown below, which should validate the value and return the validation
 
 ```go
 // Validate validates a value and returns an error if validation fails.
-Validate(value interface{}) error
+Validate(value any) error
 ```
 
 If you already have a function with the same signature as shown above, you can call `validation.By()` to turn
@@ -610,29 +637,62 @@ When performing context-aware validation, if a rule does not implement `validati
 
 The following rules are provided in the `validation` package:
 
-* `In(...interface{})`: checks if a value can be found in the given list of values.
-* `NotIn(...interface{})`: checks if a value is NOT among the given list of values.
+Many of these rules are generic. The generic type parameter is usually inferred from the argument,
+so you can write `validation.In("a", "b")` or `validation.Min(10)` without spelling it out.
+
+**Equality and membership**
+
+* `Eq[T any](expected T)`: checks if a value is equal to `expected` (using `reflect.DeepEqual`).
+* `NotEq[T any](forbidden T)`: checks if a value is NOT equal to `forbidden`.
+* `EqField[T any](other *T)`: checks if a value equals the field pointed to by `other`. Intended for
+  comparing two struct fields, e.g. a password and its confirmation. Pass a pointer to the sibling
+  field the same way you pass it to `Field`.
+* `NotEqField[T any](other *T)`: checks if a value differs from the field pointed to by `other`,
+  e.g. a new password that must not match the current one.
+* `In[T any](...T)`: checks if a value can be found in the given list of values.
+* `NotIn[T any](...T)`: checks if a value is NOT among the given list of values.
+
+**Numeric and ordered comparisons**
+
+* `Min[T Threshold](min T)` and `Max[T Threshold](max T)`: checks if a value is within the specified
+  bound (inclusive). Call `.Exclusive()` to make the bound strict. Supports int, uint, float and
+  `time.Time`.
+* `Gt[T Threshold](min T)`, `Gte[T Threshold](min T)`, `Lt[T Threshold](max T)`, `Lte[T Threshold](max T)`:
+  readable shorthands for strict/inclusive greater-than and less-than comparisons. `Gt` is equivalent
+  to `Min(min).Exclusive()`, `Gte` to `Min(min)`, and likewise for `Lt`/`Lte` and `Max`.
+* `Between[T Threshold](min, max T)`: checks if a value is within the inclusive range `[min, max]`.
+  Call `.Exclusive()` to exclude both boundaries.
+* `MultipleOf[T Integer](base T)`: checks if a value is a multiple of `base`.
+
+**Strings**
+
 * `Length(min, max int)`: checks if the length of a value is within the specified range.
   This rule should only be used for validating strings, slices, maps, and arrays.
 * `RuneLength(min, max int)`: checks if the length of a string is within the specified range.
   This rule is similar as `Length` except that when the value being validated is a string, it checks
   its rune length instead of byte length.
-* `Min(min interface{})` and `Max(max interface{})`: checks if a value is within the specified range.
-  These two rules should only be used for validating int, uint, float and time.Time types.
 * `Match(*regexp.Regexp)`: checks if a value matches the specified regular expression.
   This rule should only be used for strings and byte slices.
+* `HasPrefix(prefix string)`: checks if a string starts with `prefix`.
+* `HasSuffix(suffix string)`: checks if a string ends with `suffix`.
+* `Contains(substring string)`: checks if a string contains `substring`.
 * `Date(layout string)`: checks if a string value is a date whose format is specified by the layout.
   By calling `Min()` and/or `Max()`, you can check additionally if the date is within the specified range.
+
+**Presence**
+
 * `Required`: checks if a value is not empty (neither nil nor zero).
 * `NotNil`: checks if a pointer value is not nil. Non-pointer values are considered valid.
 * `NilOrNotEmpty`: checks if a value is a nil pointer or a non-empty value. This differs from `Required` in that it treats a nil pointer as valid.
 * `Nil`: checks if a value is a nil pointer.
 * `Empty`: checks if a value is empty. nil pointers are considered valid.
-* `Skip`: this is a special rule used to indicate that all rules following it should be skipped (including the nested ones).
-* `MultipleOf`: checks if the value is a multiple of the specified range.
+
+**Composition and control flow**
+
 * `Each(rules ...Rule)`: checks the elements within an iterable (map/slice/array) with other rules.
 * `When(condition, rules ...Rule)`: validates with the specified rules only when the condition is true.
 * `Else(rules ...Rule)`: must be used with `When(condition, rules ...Rule)`, validates with the specified rules only when the condition is false.
+* `Skip`: this is a special rule used to indicate that all rules following it should be skipped (including the nested ones).
 
 The `is` sub-package provides a list of commonly used string validation rules that can be used to check if the format
 of a value satisfies certain requirements. Note that these rules only handle strings and byte slices and if a string
