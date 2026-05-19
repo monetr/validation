@@ -143,6 +143,34 @@ func TestErrorObject_Params(t *testing.T) {
 	assert.Equal(t, err.Params(), p)
 }
 
+func TestErrorObject_Error_ValidTemplate(t *testing.T) {
+	err := NewError("code", "must be between {{.min}} and {{.max}}").
+		SetParams(map[string]any{"min": 2, "max": 10})
+	assert.Equal(t, "must be between 2 and 10", err.Error())
+}
+
+func TestErrorObject_Error_MalformedTemplateDoesNotPanic(t *testing.T) {
+	// A customized or translation-sourced message containing stray template
+	// syntax must not panic; it falls back to the raw message.
+	err := NewError("code", "must be 50%{{ off").
+		SetParams(map[string]any{"x": 1})
+
+	var msg string
+	assert.NotPanics(t, func() { msg = err.Error() })
+	assert.Equal(t, "must be 50%{{ off", msg)
+}
+
+func TestErrorObject_Error_TemplateExecutionErrorFallsBack(t *testing.T) {
+	// Parses fine, but accessing a field on a non-struct param fails at
+	// execution time. The raw message must be returned instead of panicking.
+	err := NewError("code", "value {{.n.Nope}}").
+		SetParams(map[string]any{"n": 1})
+
+	var msg string
+	assert.NotPanics(t, func() { msg = err.Error() })
+	assert.Equal(t, "value {{.n.Nope}}", msg)
+}
+
 func TestErrorObject_AddParam2(t *testing.T) {
 	p := map[string]interface{}{"key": "val"}
 	err := NewError("code", "A").(ErrorObject)

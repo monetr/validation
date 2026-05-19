@@ -106,8 +106,19 @@ func (e ErrorObject) Error() string {
 		return e.message
 	}
 
+	// The message may be customized via Error()/SetMessage() and, in i18n
+	// setups, sourced from translation files. A malformed template must not
+	// panic the caller, so fall back to the raw message if it cannot be
+	// parsed or executed.
+	tpl, err := template.New("err").Parse(e.message)
+	if err != nil {
+		return e.message
+	}
+
 	res := bytes.Buffer{}
-	_ = template.Must(template.New("err").Parse(e.message)).Execute(&res, e.params)
+	if err := tpl.Execute(&res, e.params); err != nil {
+		return e.message
+	}
 
 	return res.String()
 }
