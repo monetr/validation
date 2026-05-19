@@ -127,15 +127,26 @@ func (es Errors) Error() string {
 	sort.Strings(keys)
 
 	var s strings.Builder
-	for i, key := range keys {
-		if i > 0 {
+	first := true
+	for _, key := range keys {
+		if es[key] == nil {
+			// A nil entry means the field passed validation. Callers may build
+			// Errors directly before calling Filter, so skip it here too.
+			continue
+		}
+		if !first {
 			s.WriteString("; ")
 		}
+		first = false
 		if errs, ok := es[key].(Errors); ok {
 			_, _ = fmt.Fprintf(&s, "%v: (%v)", key, errs)
 		} else {
 			_, _ = fmt.Fprintf(&s, "%v: %v", key, es[key].Error())
 		}
+	}
+	if first {
+		// Every entry was nil, so nothing was written.
+		return ""
 	}
 	s.WriteString(".")
 	return s.String()
@@ -145,6 +156,9 @@ func (es Errors) Error() string {
 func (es Errors) MarshalJSON() ([]byte, error) {
 	errs := map[string]interface{}{}
 	for key, err := range es {
+		if err == nil {
+			continue
+		}
 		if ms, ok := err.(json.Marshaler); ok {
 			errs[key] = ms
 		} else {

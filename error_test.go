@@ -35,6 +35,34 @@ func TestErrors_Error(t *testing.T) {
 	assert.Equal(t, "", errs.Error())
 }
 
+func TestErrors_Error_NilEntries(t *testing.T) {
+	// Errors may be built directly from Validate results, which are nil on
+	// success, before Filter is called. Error must not panic on nil entries
+	// and must skip them in the output.
+	errs := Errors{
+		"A": errors.New("A1"),
+		"B": nil,
+		"C": errors.New("C1"),
+	}
+	assert.Equal(t, "A: A1; C: C1.", errs.Error())
+
+	errs = Errors{
+		"A": nil,
+		"B": nil,
+	}
+	assert.Equal(t, "", errs.Error())
+}
+
+func TestErrors_MarshalJSON_NilEntries(t *testing.T) {
+	errs := Errors{
+		"A": errors.New("A1"),
+		"B": nil,
+	}
+	errsJSON, err := errs.MarshalJSON()
+	assert.Nil(t, err)
+	assert.Equal(t, "{\"A\":\"A1\"}", string(errsJSON))
+}
+
 func TestErrors_MarshalMessage(t *testing.T) {
 	errs := Errors{
 		"A": errors.New("A1"),
