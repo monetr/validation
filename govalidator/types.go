@@ -454,7 +454,7 @@ var ISO4217List = []string{
 	"SAR", "SBD", "SCR", "SDG", "SEK", "SGD", "SHP", "SLL", "SOS", "SRD", "SSP", "STD", "STN", "SVC", "SYP", "SZL",
 	"THB", "TJS", "TMT", "TND", "TOP", "TRY", "TTD", "TWD", "TZS",
 	"UAH", "UGX", "USD", "USN", "UYI", "UYU", "UYW", "UZS",
-	"VEF", "VES", "VND", "VUV",
+	"VED", "VEF", "VES", "VND", "VUV",
 	"WST",
 	"XAF", "XAG", "XAU", "XBA", "XBB", "XBC", "XBD", "XCD", "XDR", "XOF", "XPD", "XPF", "XPT", "XSU", "XTS", "XUA", "XXX",
 	"YER",

@@ -2351,6 +2351,8 @@ func TestIsISO4217(t *testing.T) {
 		{"ZZZ", false},
 		{"usd", false},
 		{"USD", true},
+		{"VED", true},
+		{"VES", true},
 	}
 	for _, test := range tests {
 		actual := IsISO4217(test.param)
