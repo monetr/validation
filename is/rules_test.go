@@ -60,6 +60,7 @@ func TestAll(t *testing.T) {
 		{"ASCII", ASCII, "abc", "ａabc", "must contain ASCII characters only"},
 		{"PrintableASCII", PrintableASCII, "abc", "ａabc", "must contain printable ASCII characters only"},
 		{"E164", E164, "+19251232233", "+00124222333", "must be a valid E164 number"},
+		{"E164", E164, "+19251232233", "19251232233", "must be a valid E164 number"},
 		{"CountryCode2", CountryCode2, "US", "XY", "must be a valid two-letter country code"},
 		{"CountryCode3", CountryCode3, "USA", "XYZ", "must be a valid three-letter country code"},
 		{"CurrencyCode", CurrencyCode, "USD", "USS", "must be valid ISO 4217 currency code"},
