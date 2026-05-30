@@ -168,6 +168,93 @@ And when each key is validated, its rules are also evaluated in the order they a
 If a rule fails, an error is recorded for that key, and the validation will continue with the next key.
 
 
+### Validating Unions (one-of)
+
+Sometimes a value is valid if it matches *one of* several shapes — a discriminated union. A login
+payload, for example, might be `{email, password}` **or** `{username, password}`, but never both. The
+`MatchOneOf` family validates a value against a set of alternative schemas: the first schema that
+fully validates wins, and its index is returned so you can act on the matched shape (parse it, merge
+it, branch on it). If none match, a `OneOfError` is returned describing every alternative that was
+tried.
+
+#### Maps
+
+A map schema is just a `Map(...)` rule, and a variant forbids a field simply by **not listing it** —
+`Map` already reports unlisted keys as "key not expected" (unless you call `AllowExtraKeys`), so no
+special "forbidden" rule is needed.
+
+```go
+withEmail := validation.Map(
+	validation.Key("email", validation.Required, is.EmailFormat),
+	validation.Key("password", validation.Required),
+)
+withUsername := validation.Map(
+	validation.Key("username", validation.Required),
+	validation.Key("password", validation.Required),
+)
+
+i, err := validation.MatchOneOf(input, withEmail, withUsername)
+// i == 0  -> matched withEmail
+// i == 1  -> matched withUsername
+// i == -1 -> err is a OneOfError describing both attempts
+```
+
+Use `MatchOneOfWithContext` to thread a `context.Context` through to the schema rules.
+
+#### Structs
+
+In a struct every field always exists (as its zero value), so a variant marks the fields it forbids
+with the `Never` rule. `MatchOneOfStruct` takes a pointer to the struct and one `[]*FieldRules` per
+variant:
+
+```go
+emailLogin := []*validation.FieldRules{
+	validation.Field(&l.Email, validation.Required, is.EmailFormat),
+	validation.Field(&l.Password, validation.Required),
+	validation.Field(&l.Username, validation.Never), // forbidden in this variant
+}
+usernameLogin := []*validation.FieldRules{
+	validation.Field(&l.Email, validation.Never),
+	validation.Field(&l.Username, validation.Required),
+	validation.Field(&l.Password, validation.Required),
+}
+
+i, err := validation.MatchOneOfStruct(ctx, &l, emailLogin, usernameLogin)
+```
+
+`Never` gives pointer fields nil semantics (a present pointer fails even if it points at an empty
+value) and non-pointer fields zero-value semantics (an empty string or `0` passes).
+
+#### The `OneOf` rule and strict matching
+
+When you only need pass/fail and not the winning index, `OneOf(schemas ...Rule)` is the rule form and
+composes anywhere a `Rule` is accepted:
+
+```go
+err := validation.Validate(input, validation.OneOf(withEmail, withUsername))
+```
+
+By default the first matching schema wins (`anyOf` semantics). Call `.Strict()` to require that
+*exactly* one schema match; if more than one does, it fails with `ErrAmbiguousMatch` — a useful guard
+against schemas that are not mutually exclusive.
+
+#### The error shape
+
+A failed union produces a `OneOfError`, which marshals to JSON as a single `oneOf` field whose value
+is an array of the per-variant error maps, one entry per schema, in order. Each entry contains the
+fields that failed for that variant:
+
+```go
+b, _ := json.Marshal(err)
+fmt.Println(string(b))
+// {"oneOf":[{"username":"must not be provided"},{"email":"must not be provided"}]}
+```
+
+Because `OneOfError` is returned unwrapped, it nests correctly inside a parent `validation.Errors`
+(for example when a union is one field of a larger object), serializing structurally rather than
+collapsing to a string.
+
+
 ### Validation Errors
 
 The `validation.ValidateStruct` method returns validation errors found in struct fields in terms of `validation.Errors` 
@@ -686,6 +773,9 @@ so you can write `validation.In("a", "b")` or `validation.Min(10)` without spell
 * `NilOrNotEmpty`: checks if a value is a nil pointer or a non-empty value. This differs from `Required` in that it treats a nil pointer as valid.
 * `Nil`: checks if a value is a nil pointer.
 * `Empty`: checks if a value is empty. nil pointers are considered valid.
+* `Never`: checks that a value is absent — a nil pointer/interface, or the zero value for any other
+  type. Use it on the struct fields that a discriminated-union variant forbids (the counterpart to
+  `Required`). Unlike `Empty`, a *present* pointer fails even when it references an empty value.
 
 **Composition and control flow**
 
@@ -693,6 +783,17 @@ so you can write `validation.In("a", "b")` or `validation.Min(10)` without spell
 * `When(condition, rules ...Rule)`: validates with the specified rules only when the condition is true.
 * `Else(rules ...Rule)`: must be used with `When(condition, rules ...Rule)`, validates with the specified rules only when the condition is false.
 * `Skip`: this is a special rule used to indicate that all rules following it should be skipped (including the nested ones).
+
+**Unions (one-of)**
+
+* `OneOf(schemas ...Rule)`: passes when the value matches at least one of the schemas (the first
+  match wins). Call `.Strict()` to require exactly one match. On failure the error is a `OneOfError`
+  that marshals to `{"oneOf": [...]}`.
+* `MatchOneOf(value, schemas ...Rule) (int, error)` / `MatchOneOfWithContext`: like `OneOf` but
+  returns the index of the matching schema so you can act on the matched shape. Schemas are typically
+  `Map(...)` rules; a variant forbids a key by omitting it.
+* `MatchOneOfStruct[T](ctx, *T, schemas ...[]*FieldRules) (int, error)`: the struct counterpart,
+  taking one `[]*FieldRules` per variant. Use `Never` to forbid the fields a variant disallows.
 
 The `is` sub-package provides a list of commonly used string validation rules that can be used to check if the format
 of a value satisfies certain requirements. Note that these rules only handle strings and byte slices and if a string
