@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.1.0](https://github.com/monetr/validation/compare/v1.0.6...v1.1.0) (2026-05-30)
+
+
+### Features
+
+* Adding `IsPrintableUnicode` ([1aafdf4](https://github.com/monetr/validation/commit/1aafdf4ce3b29b06642ac0dd3d3ab1ec1d23e032))
+* Adding more helpers, Eq and NotEq ([ae9a45d](https://github.com/monetr/validation/commit/ae9a45de2bd944a0013021c741ed65d25a08f592))
+* Adding union/oneof validator ([#14](https://github.com/monetr/validation/issues/14)) ([e0327ea](https://github.com/monetr/validation/commit/e0327ea92a870cec8120ae0a9b7b166dcdaaf890))
+* More helpers, between, equal field, not equal field etc ([8d864ed](https://github.com/monetr/validation/commit/8d864ed681aaf5fa65f3efa57c20fb6172b21469))
+
+
+### Bug Fixes
+
+* Fixed E164 bug ([8ece6da](https://github.com/monetr/validation/commit/8ece6da56d8f8ac56f709ad42d541d9e0b1b9872))
+* Fixed missing currency ([4d84cf7](https://github.com/monetr/validation/commit/4d84cf7997922b7bf7d5a44e7d80037997289cb3))
+* Fixed nil pointer dereference issue ([bbbff68](https://github.com/monetr/validation/commit/bbbff68600d12ebd297d385573668d6d2a05d473))
+* Fixing error template panic ([8201e78](https://github.com/monetr/validation/commit/8201e7828560ad3b358574b5fda74f421f3cf8ab))
+* Improving how Indirect works ([8645c5e](https://github.com/monetr/validation/commit/8645c5e1e5d6e467da41efe5e068224d63b2d3b3))
+
+
+### Miscellaneous
+
+* Cleaning up README ([731c077](https://github.com/monetr/validation/commit/731c077a6f1aa35a251598ceb3088060351d7882))
+
+
+### Build Automation
+
+* **deps:** update github/codeql-action action to v4.36.0 ([#13](https://github.com/monetr/validation/issues/13)) ([c6a7c91](https://github.com/monetr/validation/commit/c6a7c917c132948c1fd2a5d56ca834928a831442))
+
 ## [1.0.6](https://github.com/monetr/validation/compare/v1.0.5...v1.0.6) (2026-05-18)
 
 
