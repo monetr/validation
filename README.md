@@ -238,6 +238,34 @@ By default the first matching schema wins (`anyOf` semantics). Call `.Strict()` 
 *exactly* one schema match; if more than one does, it fails with `ErrAmbiguousMatch` — a useful guard
 against schemas that are not mutually exclusive.
 
+#### Per-field unions with `AllOf`
+
+`OneOf` treats each alternative as a *single* `Rule`, which is exactly what you want when each branch
+is a whole map or struct schema. But sometimes a single field needs to match one *set* of rules OR a
+different set — for example a key that must either be null, OR be a present string of a certain length
+and shape. `OneOf` alone can't express the multi-rule branch because it only takes one rule per
+alternative. `AllOf(rules ...Rule)` bundles several rules into one (the AND counterpart to `OneOf`'s
+OR) so it can stand in as a branch:
+
+```go
+keyPattern := regexp.MustCompile(`^[a-z0-9_]+$`)
+
+err := validation.Validate(key, validation.OneOf(
+    validation.Nil, // either the key is absent,
+    validation.AllOf( // OR it is present and satisfies all three rules.
+        validation.Required,
+        validation.Length(10, 64),
+        validation.Match(keyPattern),
+    ),
+))
+```
+
+The single-rule branch (`Nil`) needs no `AllOf` — a lone `Rule` is already a valid alternative.
+`AllOf` only earns its keep on branches made of more than one rule. Like `Validate`, it runs its rules
+in order and stops at the first failure, so when an `AllOf` branch fails the `OneOfError` records the
+specific sub-rule that did not pass rather than a merged blob. It threads `context.Context` through to
+its rules, so a context-aware rule (or a nested `OneOf`) inside the set still sees it.
+
 #### The error shape
 
 A failed union produces a `OneOfError`, which marshals to JSON as a single `oneOf` field whose value
@@ -789,6 +817,9 @@ so you can write `validation.In("a", "b")` or `validation.Min(10)` without spell
 * `OneOf(schemas ...Rule)`: passes when the value matches at least one of the schemas (the first
   match wins). Call `.Strict()` to require exactly one match. On failure the error is a `OneOfError`
   that marshals to `{"oneOf": [...]}`.
+* `AllOf(rules ...Rule)`: passes only when the value matches every one of the rules (the AND
+  counterpart to `OneOf`). Its main use is bundling several rules into one so a whole SET of rules can
+  be a single branch of a `OneOf`. Stops at the first failing rule.
 * `MatchOneOf(value, schemas ...Rule) (int, error)` / `MatchOneOfWithContext`: like `OneOf` but
   returns the index of the matching schema so you can act on the matched shape. Schemas are typically
   `Map(...)` rules; a variant forbids a key by omitting it.
