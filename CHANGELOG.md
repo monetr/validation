@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/monetr/validation/compare/v1.1.0...v1.2.0) (2026-06-13)
+
+
+### Features
+
+* Adding an AllOf helper for more complex unions ([1f2aa96](https://github.com/monetr/validation/commit/1f2aa960659106ac25ac59d5d4f7a509cfc39ca5))
+* Adding type constraints like isString or isBool ([c3fd3de](https://github.com/monetr/validation/commit/c3fd3de7c3ad7975ba760f9db840843f12d3cfbe))
+
+
+### Build Automation
+
+* **deps:** update actions/checkout action to v6.0.3 ([#16](https://github.com/monetr/validation/issues/16)) ([0c1a65b](https://github.com/monetr/validation/commit/0c1a65b06ffeb20e8dbe8ac624b3ace01772ad4b))
+* **deps:** update github/codeql-action action to v4.36.1 ([#15](https://github.com/monetr/validation/issues/15)) ([97faa8c](https://github.com/monetr/validation/commit/97faa8c76c941db3c39125f68031b5a28f603894))
+* **deps:** update github/codeql-action action to v4.36.2 ([#18](https://github.com/monetr/validation/issues/18)) ([cb75153](https://github.com/monetr/validation/commit/cb751539708003c37fbc23a1f221b00bbebe6b54))
+
 ## [1.1.0](https://github.com/monetr/validation/compare/v1.0.6...v1.1.0) (2026-05-30)
 
 
