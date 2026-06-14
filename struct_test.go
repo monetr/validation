@@ -105,13 +105,13 @@ func TestValidateStruct(t *testing.T) {
 		{"t6.4", &m2, []*FieldRules{Field(&m2.E, Skip.When(false))}, "E: error 123."},
 		// Required, NotNil
 		{"t7.1", &m2, []*FieldRules{Field(&m2.F, Required)}, "F: cannot be blank."},
-		{"t7.2", &m2, []*FieldRules{Field(&m2.F, NotNil)}, "F: is required."},
+		{"t7.2", &m2, []*FieldRules{Field(&m2.F, NotNil)}, "F: must not be nil."},
 		{"t7.3", &m2, []*FieldRules{Field(&m2.F, Skip, Required)}, ""},
 		{"t7.4", &m2, []*FieldRules{Field(&m2.F, Skip, NotNil)}, ""},
 		{"t7.5", &m2, []*FieldRules{Field(&m2.F, Skip.When(true), Required)}, ""},
 		{"t7.6", &m2, []*FieldRules{Field(&m2.F, Skip.When(true), NotNil)}, ""},
 		{"t7.7", &m2, []*FieldRules{Field(&m2.F, Skip.When(false), Required)}, "F: cannot be blank."},
-		{"t7.8", &m2, []*FieldRules{Field(&m2.F, Skip.When(false), NotNil)}, "F: is required."},
+		{"t7.8", &m2, []*FieldRules{Field(&m2.F, Skip.When(false), NotNil)}, "F: must not be nil."},
 		// embedded structs
 		{"t8.1", &m3, []*FieldRules{Field(&m3.M3, Skip)}, ""},
 		{"t8.2", &m3, []*FieldRules{Field(&m3.M3)}, "M3: (A: error abc.)."},

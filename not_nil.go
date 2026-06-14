@@ -5,7 +5,7 @@
 package validation
 
 // ErrNotNilRequired is the error that returns when a value is Nil.
-var ErrNotNilRequired = NewError("validation_not_nil_required", "is required")
+var ErrNotNilRequired = NewError("validation_not_nil_required", "must not be nil")
 
 // NotNil is a validation rule that checks if a value is not nil.
 // NotNil only handles types including interface, pointer, slice, and map.

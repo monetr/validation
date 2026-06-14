@@ -57,13 +57,13 @@ func TestMap(t *testing.T) {
 		{"t6.4", m2, Map(Key("E", Skip.When(false))).AllowExtraKeys(), "E: error 123."},
 		// Required, NotNil
 		{"t7.1", m2, Map(Key("F", Required)).AllowExtraKeys(), "F: cannot be blank."},
-		{"t7.2", m2, Map(Key("F", NotNil)).AllowExtraKeys(), "F: is required."},
+		{"t7.2", m2, Map(Key("F", NotNil)).AllowExtraKeys(), "F: must not be nil."},
 		{"t7.3", m2, Map(Key("F", Skip, Required)).AllowExtraKeys(), ""},
 		{"t7.4", m2, Map(Key("F", Skip, NotNil)).AllowExtraKeys(), ""},
 		{"t7.5", m2, Map(Key("F", Skip.When(true), Required)).AllowExtraKeys(), ""},
 		{"t7.6", m2, Map(Key("F", Skip.When(true), NotNil)).AllowExtraKeys(), ""},
 		{"t7.7", m2, Map(Key("F", Skip.When(false), Required)).AllowExtraKeys(), "F: cannot be blank."},
-		{"t7.8", m2, Map(Key("F", Skip.When(false), NotNil)).AllowExtraKeys(), "F: is required."},
+		{"t7.8", m2, Map(Key("F", Skip.When(false), NotNil)).AllowExtraKeys(), "F: must not be nil."},
 		// validatable structs
 		{"t8.1", m3, Map(Key("M3", Skip)).AllowExtraKeys(), ""},
 		{"t8.2", m3, Map(Key("M3")).AllowExtraKeys(), "M3: (A: error abc.)."},

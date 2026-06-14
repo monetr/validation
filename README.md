@@ -266,6 +266,57 @@ in order and stops at the first failure, so when an `AllOf` branch fails the `On
 specific sub-rule that did not pass rather than a merged blob. It threads `context.Context` through to
 its rules, so a context-aware rule (or a nested `OneOf`) inside the set still sees it.
 
+#### Nesting unions
+
+Because `OneOf` and `AllOf` are both ordinary `Rule`s, they compose to any depth — a union can be a branch of
+another union, and a single field inside one variant can carry a union of its own. A realistic case is a
+discriminated union of object shapes (told apart by a `type` field) where one of those shapes has a field that is
+itself a small union:
+
+```go
+// A notification destination is one of three shapes, distinguished by "type".
+emailDest := validation.Map(
+	validation.Key("type", validation.Required, validation.In("email")),
+	validation.Key("address", validation.Required, is.EmailFormat),
+)
+webhookDest := validation.Map(
+	validation.Key("type", validation.Required, validation.In("webhook")),
+	validation.Key("url", validation.Required, is.URL),
+	// A union nested on a single field: the secret may be null, OR a string of
+	// 16-64 chars. The key is optional, so absent / null / value all pass.
+	validation.Key("secret", validation.OneOf(
+		validation.Nil,
+		validation.AllOf(is.String, validation.Length(16, 64)),
+	)).Required(false),
+)
+smsDest := validation.Map(
+	validation.Key("type", validation.Required, validation.In("sms")),
+	validation.Key("phone", validation.Required, is.E164),
+)
+
+// The outer union picks the shape. .Strict() guards against an input that
+// somehow satisfies more than one shape at once.
+destination := validation.OneOf(emailDest, webhookDest, smsDest).Strict()
+
+err := validation.Validate(input, destination)
+```
+
+`AllOf` is also handy *wrapping* a `OneOf` rather than inside one, to gate a union behind a coarse type check.
+Asserting the structural type first means a value of the wrong type gets one clean "must be an object" error
+instead of a `oneOf` array of every shape it failed to be:
+
+```go
+err := validation.Validate(input, validation.AllOf(
+	is.Map, // first prove it is an object at all,
+	validation.OneOf(emailDest, webhookDest, smsDest), // then that it is one of the shapes.
+))
+```
+
+The errors nest the same way the rules do: a failed inner `OneOf` produces a `OneOfError` that sits inside the
+outer `OneOfError`'s `oneOf` array (or inside a parent `validation.Errors` when the union is one field of a larger
+object), so a nested structure serializes to nested JSON rather than a flattened string. See the next section for
+the exact shape.
+
 #### The error shape
 
 A failed union produces a `OneOfError`, which marshals to JSON as a single `oneOf` field whose value
@@ -506,6 +557,96 @@ In the first scenario, an input value is considered missing if it is not entered
 In the second scenario, an input value is considered missing only if it is not entered. A pointer field is usually
 used in this case so that you can detect if a value is entered or not by checking if the pointer is nil or not.
 You can use the `validation.NotNil` rule to ensure a value is entered (even if it is a zero value).
+
+#### Presence and nullability are two different questions
+
+"Required" tends to get used as a single knob, but for JSON input there are really two independent questions, and
+it helps to keep them apart:
+
+- **Presence** — is the field in the payload at all? (`{"x": ...}` vs `{}`)
+- **Nullability** — if it is present, may its value be `null`? (`{"x": null}` vs `{"x": <value>}`)
+
+These are orthogonal, so crossing them gives four states, not three:
+
+|                     | null not allowed                                | null allowed              |
+| ------------------- | ----------------------------------------------- | ------------------------- |
+| **must be present** | required, non-nullable (the classic "required") | **required but nullable** |
+| **may be absent**   | optional, but not null if present               | optional and nullable     |
+
+The rules line up with the two axes like this:
+
+- Presence is handled by the `Map` machinery: `validation.Key("x").Required(true)` reports a missing key as
+  "required key is missing", and `.Required(false)` lets the key be absent. (Required is the default, so a `Key`
+  you do not call `.Required(false)` on must be present.)
+- Nullability is a value rule: `validation.NotNil` forbids a `null` value ("must not be nil") and
+  `validation.Nil` requires one ("must be nil").
+- `validation.Required` is a third, separate thing — it rejects the zero value (empty string, `0`, ...), not just
+  `null`. Reach for `NotNil` when you only care about null, and `Required` when an empty value is also "missing".
+
+So all four states are expressible against a map:
+
+```go
+schema := validation.Map(
+	// required, non-nullable: must be present AND not null.
+	validation.Key("a", validation.NotNil).Required(true),
+	// required but nullable: must be present, null is fine.
+	validation.Key("b").Required(true),
+	// optional, but not null if present.
+	validation.Key("c", validation.NotNil).Required(false),
+	// optional and nullable: present-null, present-value, or absent all pass.
+	validation.Key("d").Required(false),
+)
+```
+
+#### PATCH endpoints (absent vs null)
+
+The reason this distinction matters in practice is partial updates. In a `PATCH` the three input states usually
+carry three different meanings:
+
+- field **absent** -> leave it alone,
+- field **null** -> clear it,
+- field **present with a value** -> set it to that value.
+
+A plain Go struct cannot tell absent from null: `encoding/json` decodes both `{}` and `{"name": null}` into the
+same zero value (or the same `nil` pointer), so the distinction is gone before any rule runs. Decoding the body
+into a `map[string]any` keeps it — the key is simply not in the map when it was absent. For example, a profile
+patch where `name` may be updated but never cleared, while `nickname` may be updated or cleared:
+
+```go
+patch := validation.Map(
+	// "name" is optional (absent -> leave alone), but if you do send it, it
+	// must be a real non-null value, you cannot null out the name.
+	validation.Key("name", validation.NotNil, validation.Length(1, 250)).Required(false),
+	// "nickname" is optional too, and it IS nullable: send null to clear it, or
+	// a string to set it. Absent still means leave alone.
+	validation.Key("nickname", validation.Length(1, 250)).Required(false),
+)
+```
+
+`Length` (like the other value rules) treats a `null` as valid and skips it, so on `nickname` it only constrains a
+present, non-null string while still letting `null` through to mean "clear". `NotNil` on `name` is what rejects an
+explicit `null` there. Your handler then branches on which keys are actually present in the map:
+
+```go
+if v, ok := body["name"]; ok {
+	// Present, and NotNil already guaranteed it is not nil -> set it.
+	account.Name = v.(string)
+}
+if v, ok := body["nickname"]; ok {
+	// Present: nil means clear, a value means set.
+	if v == nil {
+		account.Nickname = nil
+	} else {
+		s := v.(string)
+		account.Nickname = &s
+	}
+}
+// Keys that are not in the map were absent, so they are left untouched.
+```
+
+If you only ever need "absent vs present" and a meaningful `null` is not a case you care about, a struct of
+pointer fields with `NotNil` is simpler — the distinction you give up (null vs absent) is one you would not be
+acting on anyway.
 
 
 ### Embedded Structs
