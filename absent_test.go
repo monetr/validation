@@ -20,12 +20,12 @@ func TestNil(t *testing.T) {
 		value interface{}
 		err   string
 	}{
-		{"t1", 123, "must be blank"},
-		{"t2", "", "must be blank"},
-		{"t3", &s1, "must be blank"},
-		{"t4", &s2, "must be blank"},
+		{"t1", 123, "must be nil"},
+		{"t2", "", "must be nil"},
+		{"t3", &s1, "must be nil"},
+		{"t4", &s2, "must be nil"},
 		{"t5", nil, ""},
-		{"t6", time1, "must be blank"},
+		{"t6", time1, "must be nil"},
 	}
 
 	for _, test := range tests {
@@ -73,10 +73,10 @@ func TestAbsentRule_When(t *testing.T) {
 
 func Test_absentRule_Error(t *testing.T) {
 	r := Nil
-	assert.Equal(t, "must be blank", r.Validate("42").Error())
+	assert.Equal(t, "must be nil", r.Validate("42").Error())
 	assert.False(t, r.skipNil)
 	r2 := r.Error("123")
-	assert.Equal(t, "must be blank", r.Validate("42").Error())
+	assert.Equal(t, "must be nil", r.Validate("42").Error())
 	assert.False(t, r.skipNil)
 	assert.Equal(t, "123", r2.err.Message())
 	assert.False(t, r2.skipNil)

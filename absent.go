@@ -6,7 +6,7 @@ package validation
 
 var (
 	// ErrNil is the error that returns when a value is not nil.
-	ErrNil = NewError("validation_nil", "must be blank")
+	ErrNil = NewError("validation_nil", "must be nil")
 	// ErrEmpty is the error that returns when a not nil value is not empty.
 	ErrEmpty = NewError("validation_empty", "must be blank")
 )
