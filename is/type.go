@@ -2,13 +2,20 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package validation
+package is
 
 import (
 	"encoding/json"
 	"math"
 	"reflect"
+
+	"github.com/monetr/validation"
 )
+
+// bytesType is used to tell a []byte apart from other slices. The validation
+// package has its own copy of this, but its unexported over there so we keep our
+// own here rather than reaching across the package boundary for it.
+var bytesType = reflect.TypeOf([]byte(nil))
 
 // typeKind enumerates the categories asserted by the type rules.
 type typeKind int
@@ -24,22 +31,22 @@ const (
 
 var (
 	// ErrTypeString is the error returned when a value is not a string.
-	ErrTypeString = NewError("validation_type_string", "must be a string")
+	ErrTypeString = validation.NewError("validation_type_string", "must be a string")
 	// ErrTypeInteger is the error returned when a value is not an integer.
-	ErrTypeInteger = NewError("validation_type_integer", "must be an integer")
+	ErrTypeInteger = validation.NewError("validation_type_integer", "must be an integer")
 	// ErrTypeFloat is the error returned when a value is not a number.
-	ErrTypeFloat = NewError("validation_type_float", "must be a number")
+	ErrTypeFloat = validation.NewError("validation_type_float", "must be a number")
 	// ErrTypeBool is the error returned when a value is not a boolean.
-	ErrTypeBool = NewError("validation_type_bool", "must be a boolean")
+	ErrTypeBool = validation.NewError("validation_type_bool", "must be a boolean")
 	// ErrTypeArray is the error returned when a value is not an array.
-	ErrTypeArray = NewError("validation_type_array", "must be an array")
+	ErrTypeArray = validation.NewError("validation_type_array", "must be an array")
 	// ErrTypeMap is the error returned when a value is not an object. The JSON
 	// term is used in the message because these rules are meant for JSON decoded
 	// data, where a Go map is the object.
-	ErrTypeMap = NewError("validation_type_map", "must be an object")
+	ErrTypeMap = validation.NewError("validation_type_map", "must be an object")
 )
 
-// IsString, IsInteger, IsFloat, and IsBoolean assert the underlying type of a
+// String, Integer, Boolean, Array, and Map assert the underlying type of a
 // value. They are intended for values whose static type is dynamic (any) — for
 // example data decoded from JSON into an interface or a map[string]any — where
 // the Go compiler can no longer guarantee the type. When the static type is
@@ -48,61 +55,51 @@ var (
 // Unlike the value-oriented rules (Length, Match, Min, ...) which dereference
 // to an empty value and treat it as valid, the type rules only skip a nil
 // pointer/interface. A present zero value such as 0, "", or false carries a
-// type, so the rule still asserts it: IsString rejects a present 0, while
-// IsInteger accepts a present 0. Use Required to additionally demand presence.
+// type, so the rule still asserts it: String rejects a present 0, while
+// Integer accepts a present 0. Use Required to additionally demand presence.
 //
 // Numbers are matched by value, not by Go kind, so they behave the same whether
 // JSON was decoded with the default float64 numbers or with json.Decoder's
 // UseNumber:
 //
-//   - IsFloat accepts any numeric value (integers included — every integer is a
-//     valid number).
-//   - IsInteger accepts any integer-valued number, including a whole-valued
+//   - Integer accepts any integer-valued number, including a whole-valued
 //     float such as 5.0 (but not 5.5). This is required because the default
 //     json.Unmarshal turns every number into a float64, so 5 and 5.0 are
-//     indistinguishable; IsInteger asserts the value, not how it was spelled.
+//     indistinguishable; Integer asserts the value, not how it was spelled.
 //
-// A json.Number is classified by its textual content for IsInteger/IsFloat. It
-// can only originate from an unquoted JSON number token, never from a quoted
-// string, so it is never a string (nor a boolean): IsString and IsBoolean
-// always reject a json.Number.
+// A json.Number is classified by its textual content for Integer. It can only
+// originate from an unquoted JSON number token, never from a quoted string, so
+// it is never a string (nor a boolean): String and Boolean always reject a
+// json.Number.
 //
-// IsArray and IsMap assert the two structural JSON types. A JSON array decodes
-// to a slice (the default []any) and a JSON object decodes to a map (the
-// default map[string]any), so those are what these rules accept. IsArray
-// deliberately does NOT accept a []byte: the library treats a byte slice as
-// string content everywhere else (see IsString), so a []byte is a string here,
-// not an array. Like the other type rules they only skip a true nil, which for
-// these includes a nil slice/map, a present but empty []any{} or
-// map[string]any{} still carries its type and so is accepted.
+// Array and Map assert the two structural JSON types. A JSON array decodes to a
+// slice (the default []any) and a JSON object decodes to a map (the default
+// map[string]any), so those are what these rules accept. Array deliberately
+// does NOT accept a []byte: the library treats a byte slice as string content
+// everywhere else (see String), so a []byte is a string here, not an array.
+// Like the other type rules they only skip a true nil, which for these includes
+// a nil slice/map, a present but empty []any{} or map[string]any{} still carries
+// its type and so is accepted.
 //
-// These rules now live in the is package too, where they read more naturally at
-// the call site: is.String instead of validation.IsString. The is package has
-// its own full copy of this logic, the package level rules below are kept so we
-// dont break anyone but theyre deprecated, prefer the is package versions.
-// IsFloat is the odd one out and stays un-deprecated for now because the is
-// package already has an is.Float that checks string contents, so theres no
-// clean name for the type rule over there yet.
+// Note that there is intentionally no is.Float type rule here. The is package
+// already has an is.Float that checks whether a string CONTAINS a floating point
+// number, which is a totally different thing from asserting that a value IS a
+// number. Rather than overload the name and confuse everyone, the numeric type
+// rule is left as validation.IsFloat for now.
 var (
-	// Deprecated: Use is.String instead.
-	IsString = TypeRule{kind: typeString, err: ErrTypeString}
-	// Deprecated: Use is.Integer instead.
-	IsInteger = TypeRule{kind: typeInteger, err: ErrTypeInteger}
-	IsFloat   = TypeRule{kind: typeFloat, err: ErrTypeFloat}
-	// Deprecated: Use is.Boolean instead.
-	IsBoolean = TypeRule{kind: typeBool, err: ErrTypeBool}
-	// Deprecated: Use is.Array instead.
-	IsArray = TypeRule{kind: typeArray, err: ErrTypeArray}
-	// Deprecated: Use is.Map instead.
-	IsMap = TypeRule{kind: typeMap, err: ErrTypeMap}
+	String  = TypeRule{kind: typeString, err: ErrTypeString}
+	Integer = TypeRule{kind: typeInteger, err: ErrTypeInteger}
+	Boolean = TypeRule{kind: typeBool, err: ErrTypeBool}
+	Array   = TypeRule{kind: typeArray, err: ErrTypeArray}
+	Map     = TypeRule{kind: typeMap, err: ErrTypeMap}
 )
 
 // TypeRule is a validation rule that asserts the underlying type of a value.
-// Use the package-level IsString, IsInteger, IsFloat, and IsBoolean rules
-// rather than constructing one directly.
+// Use the package-level String, Integer, Boolean, Array, and Map rules rather
+// than constructing one directly.
 type TypeRule struct {
 	kind typeKind
-	err  Error
+	err  validation.Error
 }
 
 // Error sets the error message for the rule.
@@ -112,19 +109,19 @@ func (r TypeRule) Error(message string) TypeRule {
 }
 
 // ErrorObject sets the error struct for the rule.
-func (r TypeRule) ErrorObject(err Error) TypeRule {
+func (r TypeRule) ErrorObject(err validation.Error) TypeRule {
 	r.err = err
 	return r
 }
 
 // Validate checks that the value's underlying type matches the asserted type.
 func (r TypeRule) Validate(value any) error {
-	value, isNil, err := Indirect(value)
+	value, isNil, err := validation.Indirect(value)
 	if err != nil {
 		return err
 	}
 	// Only a nil pointer/interface is skipped; a present zero value still
-	// carries a type and is therefore asserted. See the IsString doc comment.
+	// carries a type and is therefore asserted. See the String doc comment.
 	if isNil {
 		return nil
 	}
@@ -158,7 +155,7 @@ func (r TypeRule) matches(value any) bool {
 		// EnsureString also accepts a []byte, matching how StringRule treats
 		// string content throughout the library. A json.Number (kind string) is
 		// already handled above and never reaches here.
-		_, err := EnsureString(value)
+		_, err := validation.EnsureString(value)
 		return err == nil
 	case typeInteger:
 		return isIntegerValue(value)
@@ -176,7 +173,7 @@ func (r TypeRule) matches(value any) bool {
 
 // isArrayValue reports whether value is a JSON style array: a slice or an array.
 // A []byte is excluded on purpose. EnsureString treats a byte slice as string
-// content, so IsString already claims it, and we dont want the same value to be
+// content, so String already claims it, and we dont want the same value to be
 // both a string and an array. A byte array like [4]byte is not what EnsureString
 // matches (it only matches the []byte slice type) so it stays an array here.
 func isArrayValue(value any) bool {
@@ -194,13 +191,13 @@ func isArrayValue(value any) bool {
 // or unsigned integer type, or a float with no fractional part (so 5.0 counts,
 // 5.5 does not).
 func isIntegerValue(value any) bool {
-	if _, err := ToInt(value); err == nil {
+	if _, err := validation.ToInt(value); err == nil {
 		return true
 	}
-	if _, err := ToUint(value); err == nil {
+	if _, err := validation.ToUint(value); err == nil {
 		return true
 	}
-	if f, err := ToFloat(value); err == nil {
+	if f, err := validation.ToFloat(value); err == nil {
 		return !math.IsInf(f, 0) && f == math.Trunc(f)
 	}
 	return false
@@ -208,13 +205,13 @@ func isIntegerValue(value any) bool {
 
 // isNumericValue reports whether value is any numeric type.
 func isNumericValue(value any) bool {
-	if _, err := ToInt(value); err == nil {
+	if _, err := validation.ToInt(value); err == nil {
 		return true
 	}
-	if _, err := ToUint(value); err == nil {
+	if _, err := validation.ToUint(value); err == nil {
 		return true
 	}
-	_, err := ToFloat(value)
+	_, err := validation.ToFloat(value)
 	return err == nil
 }
 
