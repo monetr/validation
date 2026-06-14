@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.1](https://github.com/monetr/validation/compare/v1.2.0...v1.2.1) (2026-06-14)
+
+
+### Bug Fixes
+
+* Make the nil rule distinct in its error message ([b6fec38](https://github.com/monetr/validation/commit/b6fec381e7d8136b546e6fcd4dbf85a457789925))
+
+
+### Refactor
+
+* Migrate type assertions to the `is` package ([c2db665](https://github.com/monetr/validation/commit/c2db665952a358407cff44fc705fc5c661be2208))
+
 ## [1.2.0](https://github.com/monetr/validation/compare/v1.1.0...v1.2.0) (2026-06-13)
 
 
