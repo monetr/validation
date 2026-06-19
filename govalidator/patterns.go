@@ -25,6 +25,7 @@ const (
 	FullWidth         string = "[^\u0020-\u007E\uFF61-\uFF9F\uFFA0-\uFFDC\uFFE8-\uFFEE0-9a-zA-Z]"
 	HalfWidth         string = "[\u0020-\u007E\uFF61-\uFF9F\uFFA0-\uFFDC\uFFE8-\uFFEE0-9a-zA-Z]"
 	Base64            string = "^(?:[A-Za-z0-9+\\/]{4})*(?:[A-Za-z0-9+\\/]{2}==|[A-Za-z0-9+\\/]{3}=|[A-Za-z0-9+\\/]{4})$"
+	Base32            string = "^(?:[A-Z2-7]{8})*(?:[A-Z2-7]{2}={6}|[A-Z2-7]{4}={4}|[A-Z2-7]{5}={3}|[A-Z2-7]{7}=|[A-Z2-7]{8})$"
 	PrintableASCII    string = "^[\x20-\x7E]+$"
 	DataURI           string = "^data:.+\\/(.+);base64$"
 	MagnetURI         string = "^magnet:\\?xt=urn:[a-zA-Z0-9]+:[a-zA-Z0-9]{32,40}&dn=.+&tr=.+$"
@@ -91,6 +92,7 @@ var (
 	rxFullWidth         = regexp.MustCompile(FullWidth)
 	rxHalfWidth         = regexp.MustCompile(HalfWidth)
 	rxBase64            = regexp.MustCompile(Base64)
+	rxBase32            = regexp.MustCompile(Base32)
 	rxDataURI           = regexp.MustCompile(DataURI)
 	rxMagnetURI         = regexp.MustCompile(MagnetURI)
 	rxLatitude          = regexp.MustCompile(Latitude)

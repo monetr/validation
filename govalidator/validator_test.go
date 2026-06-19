@@ -1738,6 +1738,37 @@ func TestIsBase64(t *testing.T) {
 	}
 }
 
+func TestIsBase32(t *testing.T) {
+	t.Parallel()
+
+	var tests = []struct {
+		param    string
+		expected bool
+	}{
+		// "foobar" encoded as base32 with padding, see RFC 4648.
+		{"MZXW6YTBOI======", true},
+		// "f" through "fooba" cover all of the valid padding lengths.
+		{"MY======", true},
+		{"MZXQ====", true},
+		{"MZXW6===", true},
+		{"MZXW6YQ=", true},
+		{"MZXW6YTB", true},
+		// Lowercase is not part of the standard base32 alphabet.
+		{"mzxw6ytb", false},
+		// 0, 1, 8 and 9 are not in the base32 alphabet.
+		{"MZXW6Y01", false},
+		// Length that is not a multiple of 8 cannot be valid base32.
+		{"MZXW6", false},
+		{"", false},
+	}
+	for _, test := range tests {
+		actual := IsBase32(test.param)
+		if actual != test.expected {
+			t.Errorf("Expected IsBase32(%q) to be %v, got %v", test.param, test.expected, actual)
+		}
+	}
+}
+
 func TestIsISO3166Alpha2(t *testing.T) {
 	t.Parallel()
 

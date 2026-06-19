@@ -84,6 +84,8 @@ var (
 	ErrVariableWidth = validation.NewError("validation_is_variable_width", "must contain both full-width and half-width characters")
 	// ErrBase64 is the error that returns in case of an invalid base54 value.
 	ErrBase64 = validation.NewError("validation_is_base64", "must be encoded in Base64")
+	// ErrBase32 is the error that returns in case of an invalid base32 value.
+	ErrBase32 = validation.NewError("validation_is_base32", "must be encoded in Base32")
 	// ErrDataURI is the error that returns in case of an invalid data URI.
 	ErrDataURI = validation.NewError("validation_is_data_uri", "must be a Base64-encoded data URI")
 	// ErrE164 is the error that returns in case of an invalid e165.
@@ -205,6 +207,8 @@ var (
 	VariableWidth = validation.NewStringRuleWithError(govalidator.IsVariableWidth, ErrVariableWidth)
 	// Base64 validates if a string is encoded in Base64
 	Base64 = validation.NewStringRuleWithError(govalidator.IsBase64, ErrBase64)
+	// Base32 validates if a string is encoded in Base32
+	Base32 = validation.NewStringRuleWithError(govalidator.IsBase32, ErrBase32)
 	// DataURI validates if a string is a valid base64-encoded data URI
 	DataURI = validation.NewStringRuleWithError(govalidator.IsDataURI, ErrDataURI)
 	// E164 validates if a string is a valid ISO3166 Alpha 2 country code

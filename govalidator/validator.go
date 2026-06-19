@@ -581,6 +581,11 @@ func IsBase64(str string) bool {
 	return rxBase64.MatchString(str)
 }
 
+// IsBase32 checks if a string is base32 encoded.
+func IsBase32(str string) bool {
+	return rxBase32.MatchString(str)
+}
+
 // IsFilePath checks is a string is Win or Unix file path and returns it's type.
 func IsFilePath(str string) (bool, int) {
 	if rxWinPath.MatchString(str) {
