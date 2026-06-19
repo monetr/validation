@@ -6,12 +6,17 @@ package validation_test
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"testing"
 
 	"github.com/monetr/validation"
 	"github.com/stretchr/testify/assert"
 )
+
+// errBoom stands in for some genuine non-validation failure so we can prove an
+// InternalError is not masked by a custom AllOf message.
+var errBoom = errors.New("something is actually broken")
 
 func TestAllOf(t *testing.T) {
 	t.Run("passes when every rule passes", func(t *testing.T) {
@@ -63,6 +68,94 @@ func TestAllOf(t *testing.T) {
 			validation.Length(3, 10),
 		)
 		assert.NoError(t, rule.Validate("x"), "Skip should short circuit the set just like it does a normal rule list")
+	})
+}
+
+// TestAllOf_Error covers the custom summary error. The idea is that a compound
+// validation built from a bunch of fiddly rules can collapse ANY inner failure
+// into a single friendly message instead of leaking which specific sub-rule
+// tripped, which is handy for nuanced things like an RRULE.
+func TestAllOf_Error(t *testing.T) {
+	t.Run("collapses any failure into the custom message", func(t *testing.T) {
+		// Without a custom error this would surface "the length must be between
+		// 3 and 10", but we would rather just tell the client it is wrong.
+		rule := validation.AllOf(
+			validation.Required,
+			validation.Length(3, 10),
+		).Error("yeah thats not right")
+		err := rule.Validate("hi")
+		if assert.Error(t, err, "a value that violates a rule in the set should still fail") {
+			assert.Equal(t, "yeah thats not right", err.Error(), "the custom summary should replace the specific sub-rule error")
+		}
+	})
+
+	t.Run("does not change the first sub-rule that runs", func(t *testing.T) {
+		// No matter which rule trips the message is the same, so a different
+		// violation than the one above should produce the identical summary.
+		rule := validation.AllOf(
+			validation.Required,
+			validation.Length(3, 10),
+		).Error("yeah thats not right")
+		err := rule.Validate("")
+		if assert.Error(t, err, "an empty value should be rejected by Required") {
+			assert.Equal(t, "yeah thats not right", err.Error(), "Required failing should collapse to the same summary as Length failing")
+		}
+	})
+
+	t.Run("still passes when every rule passes", func(t *testing.T) {
+		// Setting a custom error must not turn a valid value into a failing one.
+		rule := validation.AllOf(
+			validation.Required,
+			validation.Length(3, 10),
+		).Error("yeah thats not right")
+		assert.NoError(t, rule.Validate("hello"), "a value that satisfies the whole set should not trip the custom error")
+	})
+
+	t.Run("keeps the default translation code", func(t *testing.T) {
+		// Error only overrides the message, so the code stays the AllOf default
+		// for i18n setups that key off it.
+		rule := validation.AllOf(validation.Required).Error("nope")
+		err := rule.Validate("")
+		if assert.Error(t, err) {
+			ve, ok := err.(validation.Error)
+			if assert.True(t, ok, "%T should be a validation.Error carrying a code", err) {
+				assert.Equal(t, "validation_all_of_invalid", ve.Code())
+				assert.Equal(t, "nope", ve.Message())
+			}
+		}
+	})
+
+	t.Run("ErrorObject sets the whole error struct", func(t *testing.T) {
+		// ErrorObject lets the caller control the code too, not just the message.
+		custom := validation.NewError("validation_rrule_invalid", "must be a valid recurrence rule")
+		rule := validation.AllOf(
+			validation.Required,
+			validation.Length(3, 10),
+		).ErrorObject(custom)
+		err := rule.Validate("hi")
+		if assert.Error(t, err) {
+			ve, ok := err.(validation.Error)
+			if assert.True(t, ok, "%T should be the custom validation.Error", err) {
+				assert.Equal(t, "validation_rrule_invalid", ve.Code())
+				assert.Equal(t, "must be a valid recurrence rule", ve.Message())
+			}
+		}
+	})
+
+	t.Run("does not mask an internal error", func(t *testing.T) {
+		// An InternalError means something is genuinely broken (a config or
+		// programmer bug), not that the value is invalid. We do NOT want that
+		// hiding behind the friendly summary, so it should pass through as-is.
+		boom := validation.By(func(_ any) error {
+			return validation.NewInternalError(errBoom)
+		})
+		rule := validation.AllOf(boom).Error("yeah thats not right")
+		err := rule.Validate("anything")
+		if assert.Error(t, err, "the internal error should still surface") {
+			assert.NotEqual(t, "yeah thats not right", err.Error(), "an internal error must not be masked by the custom summary")
+			_, ok := err.(validation.InternalError)
+			assert.True(t, ok, "%T should remain an InternalError so a real bug is not mistaken for a validation failure", err)
+		}
 	})
 }
 
