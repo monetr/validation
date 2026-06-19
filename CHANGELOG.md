@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.3.0](https://github.com/monetr/validation/compare/v1.2.0...v1.3.0) (2026-06-19)
+
+
+### Features
+
+* Adding `is.Base32` helper ([538d26e](https://github.com/monetr/validation/commit/538d26e789d7f83356667f25cccab8b483c4c1dd))
+* Support custom errors on the `AllOf` helper ([c510f1d](https://github.com/monetr/validation/commit/c510f1d7a4e13f20897e19d052b025ef1347c5da))
+
+
+### Bug Fixes
+
+* Make the nil rule distinct in its error message ([b6fec38](https://github.com/monetr/validation/commit/b6fec381e7d8136b546e6fcd4dbf85a457789925))
+
+
+### Miscellaneous
+
+* Improvements ([dd0184c](https://github.com/monetr/validation/commit/dd0184c0808922adbabcde4a0d46771cda92eea9))
+
+
+### Refactor
+
+* Migrate type assertions to the `is` package ([c2db665](https://github.com/monetr/validation/commit/c2db665952a358407cff44fc705fc5c661be2208))
+
 ## [1.2.0](https://github.com/monetr/validation/compare/v1.1.0...v1.2.0) (2026-06-13)
 
 
