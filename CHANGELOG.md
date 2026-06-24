@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/monetr/validation/compare/v1.3.0...v1.3.1) (2026-06-24)
+
+
+### Miscellaneous
+
+* Updating renovate config ([60f0b3d](https://github.com/monetr/validation/commit/60f0b3da174f45d4c4b63d28e80a4b1e4c211839))
+
 ## [1.3.0](https://github.com/monetr/validation/compare/v1.2.0...v1.3.0) (2026-06-19)
 
 
