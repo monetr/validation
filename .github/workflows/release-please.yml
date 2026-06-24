@@ -2,6 +2,9 @@ name: Release
 on:
   push:
     branches: [main]
+permissions:
+  contents: read
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
@@ -14,6 +17,11 @@ jobs:
       # the `vX.Y.Z` git tag. For a Go module that tag *is* the published
       # artifact (consumed directly by `go get`), so there is no separate
       # publish step like the npm packages in monetr/notify and monetr/vaul.
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
         id: release
         with:
