@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.1](https://github.com/monetr/validation/compare/v1.3.0...v1.3.1) (2026-09-01)
+
+
+### Miscellaneous
+
+* Updating renovate config ([60f0b3d](https://github.com/monetr/validation/commit/60f0b3da174f45d4c4b63d28e80a4b1e4c211839))
+
+
+### Build Automation
+
+* **deps:** update actions/checkout action to v7 ([#23](https://github.com/monetr/validation/issues/23)) ([4656ce9](https://github.com/monetr/validation/commit/4656ce9c38d06bfd058b3774d3e69ac6e90f70d7))
+* **deps:** update actions/checkout action to v7.0.1 ([#26](https://github.com/monetr/validation/issues/26)) ([35e2bc1](https://github.com/monetr/validation/commit/35e2bc124d08284d551376aa073799f2816cfb61))
+* **deps:** update actions/setup-go action to v6.5.0 ([#22](https://github.com/monetr/validation/issues/22)) ([213a8d8](https://github.com/monetr/validation/commit/213a8d832ff4b752b032f9560544070abfde1180))
+* **deps:** update actions/setup-go action to v7 ([#27](https://github.com/monetr/validation/issues/27)) ([2a2fd54](https://github.com/monetr/validation/commit/2a2fd54ba4d85e95b518b13393c29ac29ff96e63))
+* **deps:** update github/codeql-action action to v4.37.5 ([#24](https://github.com/monetr/validation/issues/24)) ([8196099](https://github.com/monetr/validation/commit/8196099552b5878630c876ea1c79e32b4066729c))
+* **deps:** update github/codeql-action action to v4.37.8 ([#28](https://github.com/monetr/validation/issues/28)) ([b4e851c](https://github.com/monetr/validation/commit/b4e851c4cff1d4fc0333dda853e13f1d1c590883))
+* **deps:** update step-security/harden-runner action to v2.20.0 ([#25](https://github.com/monetr/validation/issues/25)) ([7bd3485](https://github.com/monetr/validation/commit/7bd34854ee7afb9fd43ff9a187413ada679babf0))
+* **deps:** update step-security/harden-runner action to v2.21.0 ([#29](https://github.com/monetr/validation/issues/29)) ([3530e96](https://github.com/monetr/validation/commit/3530e96573d7a95f106abbd22a285a0998c261ea))
+
 ## [1.3.0](https://github.com/monetr/validation/compare/v1.2.0...v1.3.0) (2026-06-19)
 
 
